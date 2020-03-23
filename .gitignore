@@ -1,6 +1,6 @@
 .idea
 .venv
 .git
-MySpiders/MySpiders/spiders/data
 test
 *.pyc
+MySpiders/spiders/data
