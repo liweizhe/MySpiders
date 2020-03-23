@@ -1,0 +1,1 @@
+# MySpiders based on Scrapy Framework
