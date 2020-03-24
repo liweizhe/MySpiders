@@ -6,6 +6,8 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from MySpiders.libs.mock_headers import MockHeaders
+from scrapy.http.headers import Headers
 
 
 class MyspidersSpiderMiddleware(object):
@@ -101,3 +103,10 @@ class MyspidersDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class MockHeadersMiddleware(object):
+    def process_request(self, request, spider):
+        headers = MockHeaders()
+        headers = headers.get_headers(host='www.xmrc.com.cn/')
+        request.headers = Headers(headers)

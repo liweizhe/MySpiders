@@ -8,7 +8,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-
+from MySpiders.libs.user_agents import agents
 BOT_NAME = 'MySpiders'
 
 SPIDER_MODULES = ['MySpiders.spiders']
@@ -17,6 +17,7 @@ NEWSPIDER_MODULE = 'MySpiders.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'MySpiders (+http://www.yourdomain.com)'
+USER_AGENT_LIST = agents
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -52,9 +53,10 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'MySpiders.middlewares.MyspidersDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+    'MySpiders.middlewares.MockHeadersMiddleware': 1,
+    # 'MySpiders.middlewares.MyspidersDownloaderMiddleware': 543,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
