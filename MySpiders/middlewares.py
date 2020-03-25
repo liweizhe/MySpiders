@@ -108,5 +108,5 @@ class MyspidersDownloaderMiddleware(object):
 class MockHeadersMiddleware(object):
     def process_request(self, request, spider):
         headers = MockHeaders()
-        headers = headers.get_headers(host='www.xmrc.com.cn/')
+        headers = headers.get_headers(host='www.xmrc.com.cn')
         request.headers = Headers(headers)

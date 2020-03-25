@@ -18,6 +18,8 @@ NEWSPIDER_MODULE = 'MySpiders.spiders'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'MySpiders (+http://www.yourdomain.com)'
 USER_AGENT_LIST = agents
+HOST = 'www.xmrc.com.cn'
+HOST_HTTPS = 'https://www.xmrc.com.cn'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -53,10 +55,10 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-DOWNLOADER_MIDDLEWARES = {
-    'MySpiders.middlewares.MockHeadersMiddleware': 1,
-    # 'MySpiders.middlewares.MyspidersDownloaderMiddleware': 543,
-}
+# DOWNLOADER_MIDDLEWARES = {
+#     'MySpiders.middlewares.MockHeadersMiddleware': 1,
+#     # 'MySpiders.middlewares.MyspidersDownloaderMiddleware': 543,
+# }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -66,9 +68,11 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'MySpiders.pipelines.MyspidersPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'MySpiders.pipelines.MySpidersPipeline': 300,
+   'MySpiders.pipelines.MongoDBPipeline': 400,
+
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

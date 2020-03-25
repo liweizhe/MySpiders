@@ -1,20 +1,7 @@
-# from scrapy_redis.spiders import RedisSpider
-# from scrapy.http import Request
-#
-#
-# class CompanySpider(RedisSpider):
-#     name = 'company_spider'
-#     redis_key = 'spiders:company'
-#     redis_encoding = 'utf-8'
-#     base_url = 'https://www.xmrc.com.cn/'
-#
-#     def make_requests_from_url(self, url):
-#         url = self.base_url + url
-#         return Request(url=url, dont_filter=False)
-
 import scrapy
+import re
 from MySpiders.items import CompanyItem
-# from ..items import CompanyItem
+from MySpiders.settings import HOST_HTTPS
 
 
 class CompanySpider(scrapy.Spider):
@@ -22,29 +9,29 @@ class CompanySpider(scrapy.Spider):
     start_urls = [
         # 'https://www.xmrc.com.cn/net/info/showcojob.aspx?CompanyID=97165',
         # 'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=925916',
-        'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=360868',
+        # 'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=360868',
         # 'https://www.xmrc.com.cn/net/info/showcojob.aspx?CompanyID=72526'
 
     ]
+    with open('data/company.txt', 'r') as fi:
+        for l in fi:
+            start_urls.append(HOST_HTTPS + l.strip())
 
     def parse(self, response):
-        table = response.xpath('//*[@id="container"]/table[2]/tr/td[3]/table[4]/tr[1]/td[2]/table/tr')
         item = CompanyItem()
+        self.parse_name(response=response, item=item)
+        self.parse_info(response=response, item=item)
+        self.parse_job(response=response, item=item)
+        self.parse_email(response=response, item=item)
+        self.parse_logo(response=response, item=item)
+        # for k in item:
+        #     print(item.get(k), '\n', '-' * 60)
+        yield item
 
-        src = response.xpath('//*/@src').extract()
-        for s in src:
-            if '/net/Common/GetCompanyLogo' in s:
-                item['logo'] = s
-            elif '/net/common/getJPEG.ashx' in s:
-                item['email'] = s + '&flag=1'
-            else:
-                continue
+    def parse_info(self, response, item):
+        table = response.xpath('//*[@id="container"]/table[2]/tr/td[3]/table[4]/tr[1]/td[2]/table/tr')
         item['info'] = ''
         for row in table:
-            # //*[@id="container"]/table[2]/tr/td[3]/table[4]/tr[1]/td[2]/table/tr
-            # //*[@id="container"]/table[2]/tr/td[3]/table[4]/tr[1]/td[2]/table/tr[9]/td[2]
-            # //*[@id="ctl00_Body_Repeater1_ctl00_CompanyIntro1_Repeater1_ctl00_Tr6"]/td[2]
-            # print(row.xpath('td').extract(), '\n', '-' * 60, '\n')
             raw_data = row.xpath('td[2]/text()').extract()
             # raw_data = row.xpath('td[2]').extract()
             if raw_data:
@@ -66,26 +53,37 @@ class CompanySpider(scrapy.Spider):
                             item['industry'] = data
                         else:
                             item['info'] += '{}\n'.format(data)
-                        # print(data, '\n', '-' * 60)
-        # for k in item:
-        #     print(k, item.get(k), '\n')
-        # print(item.get('email'))
-        # print(item.get('logo'))
-        # //*[@id="container"]/table[2]/tr/td[1]/table/tr[2]/td/div/table/tr[7]/td/a/u
-        # //*[@id="container"]/table[2]/tr/td[1]/table/tr[2]/td/div/table/tr[7]/td
-        # //*[@id="container"]/table[2]/tr/td[1]/table/tr[2]/td/div/table/
-        # //*[@id="container"]/table[2]/tr/td[1]/table/tr[2]/td/div/table/tr[2]/td/a
-        # //*[@id="container"]/table[2]/tr/td[1]/table/tr[2]/td/div/table/tr[22]/td/a/u
+
+    def parse_job(self, response, item):
         table = response.xpath('//*[@id="container"]/table[2]/tr/td[1]/table/tr[2]/td/div/table/tr')
         item['job'] = []
         for row in table:
-            # raw_data = row.xpath('td').extract()
             raw_data = row.xpath('td/a/@href').extract()
             if raw_data:
-                # print(raw_data, '\n', '-' * 60)
-                item['job'].append(raw_data[0])
-        print(item.get('job'))
-        print('**' * 50, '\n')
+                pattern = re.compile(r'(?<=id=)\d+\.?')
+                id_str = pattern.findall(raw_data[0])[0]
+                item['job'].append(int(id_str))
+
+    def parse_name(self, response, item):
+        raw_data = response.xpath('//*[@id="logo_td2"]/text()').extract()
+        item['name'] = raw_data[0].strip()
+        parsed_url = response.request.url
+        # print(parsed_url)
+        pattern = re.compile(r'(?<=ID=)\d+\.?')
+        id_str = pattern.findall(parsed_url)[0]
+        item['id'] = int(id_str)
+
+    def parse_email(self, response, item):
+        src = response.xpath('//*/@src').extract()
+        for s in src:
+            if '/net/common/getJPEG.ashx' in s:
+                item['email'] = s + '&flag=1'
+
+    def parse_logo(self, response, item):
+        src = response.xpath('//*/@src').extract()
+        for s in src:
+            if '/net/Common/GetCompanyLogo' in s:
+                item['logo'] = s
 
 
 if __name__ == '__main__':

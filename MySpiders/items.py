@@ -29,3 +29,21 @@ class CompanyItem(scrapy.Item):
     job = scrapy.Field()
 
 
+class JobItem(scrapy.Item):
+    id = scrapy.Field()
+    name = scrapy.Field()
+    company = scrapy.Field()
+    time = scrapy.Field()
+    department = scrapy.Field()
+    contact = scrapy.Field()
+    Tel = scrapy.Field()
+    address = scrapy.Field()
+    education = scrapy.Field()
+    nature = scrapy.Field()
+    experience = scrapy.Field()
+    age = scrapy.Field()
+    location = scrapy.Field()
+    salary = scrapy.Field()
+    schedule = scrapy.Field()
+    welfare = scrapy.Field()
+    response_and_require = scrapy.Field()
