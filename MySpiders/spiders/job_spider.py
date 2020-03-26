@@ -7,13 +7,13 @@ from MySpiders.settings import HOST_HTTPS
 class JobSpider(scrapy.Spider):
     name = 'job_spider'
     start_urls = [
-        # 'https://www.xmrc.com.cn/net/info/showco.aspx?id=1188910',
-        # 'https://www.xmrc.com.cn/net/info/showco.aspx?id=2461451'
+        'https://www.xmrc.com.cn/net/info/showco.aspx?id=1188910',
+        'https://www.xmrc.com.cn/net/info/showco.aspx?id=2461451'
 
     ]
-    with open('data/job.txt', 'r') as fi:
-        for l in fi:
-            start_urls.append(HOST_HTTPS + l.strip())
+    # with open('data/job.txt', 'r') as fi:
+    #     for l in fi:
+    #         start_urls.append(HOST_HTTPS + l.strip())
 
     def parse(self, response):
         item = JobItem()

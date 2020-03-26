@@ -4,3 +4,4 @@
 test
 *.pyc
 MySpiders/spiders/data
+MySpiders/data

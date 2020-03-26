@@ -7,15 +7,15 @@ from MySpiders.settings import HOST_HTTPS
 class CompanySpider(scrapy.Spider):
     name = 'company_spider'
     start_urls = [
-        # 'https://www.xmrc.com.cn/net/info/showcojob.aspx?CompanyID=97165',
-        # 'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=925916',
-        # 'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=360868',
-        # 'https://www.xmrc.com.cn/net/info/showcojob.aspx?CompanyID=72526'
+        'https://www.xmrc.com.cn/net/info/showcojob.aspx?CompanyID=97165',
+        'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=925916',
+        'https://www.xmrc.com.cn/net/info/showco.aspx?CompanyID=360868',
+        'https://www.xmrc.com.cn/net/info/showcojob.aspx?CompanyID=72526'
 
     ]
-    with open('data/company.txt', 'r') as fi:
-        for l in fi:
-            start_urls.append(HOST_HTTPS + l.strip())
+    # with open('data/company.txt', 'r') as fi:
+    #     for l in fi:
+    #         start_urls.append(HOST_HTTPS + l.strip())
 
     def parse(self, response):
         item = CompanyItem()
