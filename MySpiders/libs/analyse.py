@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 import re
-from bson import ObjectId
 from MySpiders.libs.time_usage import time_usage
 from MySpiders.libs.tables import FORMATED_SALARY
 
@@ -102,7 +101,7 @@ def analyse_set(db_name='xmrc', clt_name='job', key='welfare', split_char='、')
 
 
 if __name__ == '__main__':
-    # analyse_salary()
+    analyse_salary()
     # analyse_set()
     # analyse_set(key='nature')
     # analyse_set(key='experience')

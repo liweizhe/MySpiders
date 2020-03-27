@@ -88,11 +88,11 @@ EDUCATION = {
     '小学以上': 1,  # 573
     '初中以上': 2,  # 4238
     '高中以上': 3,  # 6407
-    '中专以上': 5,  # 9189
-    '本科以上': 6,  # 17781
-    '大专以上': 7,  # 38583
-    '硕士研究生以上': 8,  # 506
-    '博士研究生以上': 9,  # 52
+    '中专以上': 4,  # 9189
+    '本科以上': 5,  # 17781
+    '大专以上': 6,  # 38583
+    '硕士研究生以上': 7,  # 506
+    '博士研究生以上': 8,  # 52
 }
 
 COMPANY_NATURE = {
@@ -191,4 +191,41 @@ SCALE = {
     '3001-5000人': 10,  # 43
     '5001-10000人': 11,  # 41
     '10000人以上': 12,  # 44
+}
+
+JOB_KEYS = {
+    "_id": 0,
+    "id": 1,
+    "name": 1,
+    "time": 1,
+    "contact": 1,
+    "Tel": 1,
+    "address": 1,
+    "company": 1,
+    "age": 1,
+    "location": 1,
+    "schedule": 1,
+    "welfare": 1,
+    "response_and_require": 1,
+    "company_id": 1,
+    "salary_id": 1,
+    "nature_id": 1,
+    "education_id": 1,
+    "experience_id": 1
+}
+
+COMPANY_KEYS = {
+    "_id": 0,
+    "id": 1,
+    "name": 1,
+    "info": 1,
+    "contact": 1,
+    "Tel": 1,
+    "address": 1,
+    "job": 1,
+    "email": 1,
+    "scale_id": 1,
+    # "logo": 1,
+    "nature_id": 1,
+    "industry_id": 1
 }
