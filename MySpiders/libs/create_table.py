@@ -1,7 +1,7 @@
 import pymysql
 from pymongo import MongoClient
 from MySpiders.libs.tables import SALARY, COMPANY_NATURE, SCALE, WELFARE, WORK_NATURE, EXPERIENCE, EDUCATION, INDUSTRY,\
-    JOB_KEYS, COMPANY_KEYS, INSERT_TABLE, CREATE_TABLE, DROP_TABLE
+    JOB_KEYS, INSERT_TABLE, CREATE_TABLE, DROP_TABLE, SCHEDULE
 from MySpiders.libs.time_usage import time_usage
 from pymysql.err import IntegrityError, DataError, InternalError
 import re
@@ -51,7 +51,7 @@ def dict_to_list(dict_impl):
 
 
 def insert(table_name, dict_name):
-    conn = pymysql.connect(host='localhost', user='root', password='123456', database='xmrc', charset='utf8')
+    conn = pymysql.connect(host='localhost', user='root', password='', database='xmrc', charset='utf8')
     cursor = conn.cursor()
     cursor.execute(DROP_TABLE.format(table_name))
     cursor.execute(CREATE_TABLE.format(table_name, table_name))
@@ -76,6 +76,7 @@ def insert_tables():
     insert('education', EDUCATION)
     insert('company_nature', COMPANY_NATURE)
     insert('industry', INDUSTRY)
+    insert('schedule', SCHEDULE)
 
 
 @time_usage
@@ -220,6 +221,53 @@ def get_insert_sql(dict_impl, table_name='job'):
     return keys + values
 
 
+@time_usage
+def analyse_job(d='xmrc', c='job', key='welfare', table=WELFARE):
+    collection = MongoClient()[d][c]
+    docs = collection.find({}, {'_id': False})
+    for doc in docs:
+        value = doc.get(key)
+        if value:
+            tmp_lst = []
+            for k in table:
+                if k in value:
+                    tmp_lst.append(table[k])
+            doc[key] = tmp_lst
+            collection.update_one({'id': doc['id']}, {'$set': doc})
+
+
+@time_usage
+def create_job_linked_table(d='xmrc', c='job', key='welfare', limit=0):
+    collection = MongoClient()[d][c]
+    if limit > 0:
+        docs = collection.find().limit(limit)
+    else:
+        docs = collection.find()
+    conn = pymysql.connect(host='localhost', user='root', password='', database='xmrc', charset='utf8')
+    cursor = conn.cursor()
+    j_id = 'job_id'
+    k_id = '{}_id'.format(key)
+    table_name = 'job_{}'.format(key)
+
+    for doc in docs:
+        lst = doc.get(key)
+        if lst and isinstance(lst, list):
+            job_id = doc.get('id')
+            for l in lst:
+                tmp_dict = dict()
+                tmp_dict[k_id] = l
+                tmp_dict[j_id] = job_id
+                sql = get_insert_sql(tmp_dict, table_name)
+                try:
+                    cursor.execute(sql)
+                except Exception as e:
+                    print(e)
+                    print(sql)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
 if __name__ == '__main__':
     # reverse()
     # insert(table_name='salary')
@@ -234,4 +282,8 @@ if __name__ == '__main__':
     # select_by_keys(c='company', selector=COMPANY_KEYS)
     # remove_redundant()
     # remove_redundant(c='company')
+    # analyse_job()
+    # analyse_job(key='schedule', table=SCHEDULE)
+    # create_job_linked_table(limit=0)
+    # create_job_linked_table(key='schedule', limit=0)
     pass

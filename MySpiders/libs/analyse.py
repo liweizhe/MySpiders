@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import re
 from MySpiders.libs.time_usage import time_usage
 from MySpiders.libs.tables import FORMATED_SALARY
+import json
 
 
 @time_usage
@@ -73,7 +74,7 @@ def analyse_set(db_name='xmrc', clt_name='job', key='welfare', split_char='、')
     collection = MongoClient()[db_name][clt_name]
     # docs = collection.find().limit(1000)
     docs = collection.find()
-    pattern = re.compile(r'(?<=： )[\s\S]+')
+    pattern = re.compile('(?<=：)[\s\S]+')
     tmp_set = set()
     tmp_dict = {}
     for doc in docs:
@@ -82,15 +83,22 @@ def analyse_set(db_name='xmrc', clt_name='job', key='welfare', split_char='、')
         if data:
             # print(data)
             data = pattern.findall(data)
+
             if data:
-                data = data[0]
+                if key == 'schedule':
+                    data = ",".join("".join(l.strip() for l in data).split("\r\n"))
+                    # print(data)
+                else:
+                    data = data[0]
                 data_list = data.split(split_char)
                 for d in data_list:
-                    if not tmp_dict.get(d):
-                        tmp_dict[d] = 1
-                    else:
-                        tmp_dict[d] += 1
-                    tmp_set.add(d)
+                    d = d.strip()
+                    if d:
+                        if not tmp_dict.get(d):
+                            tmp_dict[d] = 1
+                        else:
+                            tmp_dict[d] += 1
+                        tmp_set.add(d)
     # for s in tmp_set:
     #     print(s)
     w = sorted(tmp_dict.items(), key=lambda x: x[1], reverse=True)
@@ -102,7 +110,8 @@ def analyse_set(db_name='xmrc', clt_name='job', key='welfare', split_char='、')
 
 if __name__ == '__main__':
     # analyse_salary()
-    analyse_set()
+    # analyse_set()
+    analyse_set(key="schedule", split_char=',')
     # analyse_set(key='nature')
     # analyse_set(key='experience')
     # analyse_set(key='education')
