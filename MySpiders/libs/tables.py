@@ -199,13 +199,13 @@ JOB_KEYS = {
     "name": 1,
     "time": 1,
     "contact": 1,
-    "Tel": 1,
+    "tel": 1,
     "address": 1,
     "company": 1,
     "age": 1,
     "location": 1,
-    "schedule": 1,
-    "welfare": 1,
+    # "schedule": 1,
+    # "welfare": 1,
     "response_and_require": 1,
     "company_id": 1,
     "salary_id": 1,
@@ -220,12 +220,61 @@ COMPANY_KEYS = {
     "name": 1,
     "info": 1,
     "contact": 1,
-    "Tel": 1,
+    "tel": 1,
     "address": 1,
-    "job": 1,
     "email": 1,
     "scale_id": 1,
     # "logo": 1,
     "nature_id": 1,
     "industry_id": 1
 }
+DROP_TABLE = "DROP TABLE IF EXISTS {};"
+
+CREATE_TABLE = """
+CREATE TABLE IF NOT EXISTS {} (
+    {}_id INT(2) PRIMARY KEY,
+    content CHAR(30) NOT NULL 
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+"""
+INSERT_TABLE = """
+INSERT INTO {} ({}_id, content) VALUES (%s, %s)
+"""
+"""
+welfare CHAR(255) COMMENT '薪资福利',
+schedule CHAR(255) COMMENT '上班时间',
+"""
+CREATE_TABLES = """
+DROP TABLE IF EXISTS job;
+CREATE TABLE IF NOT EXISTS job(
+    id INT(8) PRIMARY KEY COMMENT '求职信息_id',
+    name CHAR (255) COMMENT '职位名称',
+    date_lower CHAR(16) COMMENT '招聘期限开始',
+    date_upper CHAR(16) COMMENT '招聘期限截止',
+    contact CHAR(64) COMMENT '联系人',
+    tel CHAR(64) COMMENT '联系电话',
+    address CHAR(255) COMMENT '通信地址',
+    company CHAR(64) COMMENT '招聘单位',
+    age_lower INT(3) COMMENT '年龄要求下限',
+    age_upper INT(3) COMMENT '年龄要求上限',
+    location CHAR(255) COMMENT '工作地点',
+    response_and_require  VARCHAR(4096) COMMENT '职位职责和职位要求',
+    company_id INT(8) NOT NULL COMMENT '招聘单位_id',
+    salary_id INT(8) COMMENT '参考月薪_id',
+    nature_id INT(8) COMMENT '职位性质_id',
+    education_id INT(8) COMMENT '职位性质_id',
+    experience_id INT(8) COMMENT '工作经验_id'
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+DROP TABLE IF EXISTS company;
+CREATE TABLE IF NOT EXISTS company(
+    id INT(8) PRIMARY KEY COMMENT '公司_id',
+    name CHAR(64) NOT NULL COMMENT '公司名',
+    info VARCHAR(4096) COMMENT '公司简介',
+    contact CHAR(32) COMMENT '联系人',
+    tel CHAR(32) COMMENT '联系电话',
+    address CHAR(255) COMMENT '联系地址',
+    email CHAR(64) COMMENT '电子邮件',
+    scale_id INT(8) COMMENT '公司规模_id',
+    nature_id INT(8) COMMENT '公司性质_id',
+    industry_id INT(8) COMMENT '公司行业_id'
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+"""

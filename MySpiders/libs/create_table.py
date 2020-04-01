@@ -1,62 +1,39 @@
 import pymysql
 from pymongo import MongoClient
 from MySpiders.libs.tables import SALARY, COMPANY_NATURE, SCALE, WELFARE, WORK_NATURE, EXPERIENCE, EDUCATION, INDUSTRY,\
-    JOB_KEYS, COMPANY_KEYS
+    JOB_KEYS, COMPANY_KEYS, INSERT_TABLE, CREATE_TABLE, DROP_TABLE
 from MySpiders.libs.time_usage import time_usage
-import json
-from pymysql.err import IntegrityError
+from pymysql.err import IntegrityError, DataError, InternalError
+import re
 
-DROP_TABLE = "DROP TABLE IF EXISTS {};"
 
-CREATE_TABLE = """
-CREATE TABLE IF NOT EXISTS {} (
-    {}_id INT(2) PRIMARY KEY,
-    content CHAR(30) NOT NULL 
-    )ENGINE=InnoDB DEFAULT CHARSET=utf8;
-"""
-INSERT_TABLE = """
-INSERT INTO {} ({}_id, content) VALUES (%s, %s)
-"""
+@time_usage
+def remove_redundant(d='xmrc', c='job'):
+    collection = MongoClient()[d][c]
+    if c == 'job':
+        key = 'company_id'
+    else:
+        key = 'job'
+    docs = collection.find()
+    i = 0
+    for doc in docs:
+        if not doc.get(key):
+            collection.delete_one({'id': doc.get('id')})
+            i += 1
+    print(i)
 
-CREATE_JOB = """
-DROP TABLE IF EXISTS job;
-CREATE TABLE IF NOT EXISTS job(
-    id INT(8) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    time VARCHAR(255),
-    contact VARCHAR(255),
-    Tel VARCHAR(255),
-    address VARCHAR(255),
-    company VARCHAR(255),
-    age VARCHAR(255),
-    location VARCHAR(255),
-    schedule VARCHAR(255),
-    welfare VARCHAR(255),
-    response_and_require  VARCHAR(255),
-    company_id INT(8),
-    salary_id INT(8),
-    nature_id INT(8),
-    education_id INT(8),
-    experience_id INT(8)
-    )ENGINE=InnoDB DEFAULT CHARSET=utf8;
-"""
 
-CREATE_COMPANY = """
-DROP TABLE IF EXISTS company;
-CREATE TABLE IF NOT EXISTS company(
-    id INT(8) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    info VARCHAR(1024),
-    contact VARCHAR(255),
-    Tel VARCHAR(255),
-    address VARCHAR(255),
-    job VARCHAR(255),
-    email VARCHAR(255),
-    scale_id INT(8),
-    nature_id INT(8),
-    industry_id INT(8)
-    )ENGINE=InnoDB DEFAULT CHARSET=utf8;
-"""
+@time_usage
+def link_job_company(d='xmrc', c1='company', c2='job'):
+    company_collectiion = MongoClient()[d][c1]
+    job_collection = MongoClient()[d][c2]
+    docs = company_collectiion.find({}, {'_id': False})
+    for doc in docs:
+        for job_id in doc.get('job'):
+            tmp_doc = job_collection.find_one({'id': job_id}, {'_id': False})
+            if tmp_doc:
+                tmp_doc['company_id'] = doc.get('id')
+                job_collection.update_one({'id': tmp_doc['id']}, {'$set': tmp_doc})
 
 
 def reverse(dict_impl=SALARY):
@@ -126,19 +103,6 @@ def update_job(d='xmrc', c='job'):
         collection.update_one({'id': doc['id']}, {'$set': doc})
 
 
-@time_usage
-def link_job_company(d='xmrc', c1='company', c2='job'):
-    company_collectiion = MongoClient()[d][c1]
-    job_collection = MongoClient()[d][c2]
-    docs = company_collectiion.find({}, {'_id': False})
-    for doc in docs:
-        for job_id in doc.get('job'):
-            tmp_doc = job_collection.find_one({'id': job_id}, {'_id': False})
-            if tmp_doc:
-                tmp_doc['company_id'] = doc.get('id')
-                job_collection.update_one({'id': tmp_doc['id']}, {'$set': tmp_doc})
-
-
 def assign_by_dict(source_dict, key, data_dict):
     value = source_dict.get(key)
     # print(value)
@@ -153,12 +117,12 @@ def assign_by_dict(source_dict, key, data_dict):
 
 
 @time_usage
-def select_by_keys(d='xmrc', c='job', selector=JOB_KEYS, limit_flag=True):
-    conn = pymysql.connect(host='localhost', user='root', password='123456', database='xmrc', charset='utf8')
+def select_by_keys(d='xmrc', c='job', selector=JOB_KEYS, limit=0):
+    conn = pymysql.connect(host='localhost', user='root', password='', database='xmrc', charset='utf8')
     cursor = conn.cursor()
     connection = MongoClient()[d][c]
-    if limit_flag:
-        docs = connection.find({}, selector).limit(20)
+    if limit > 0:
+        docs = connection.find({}, selector).limit(limit)
     else:
         docs = connection.find({}, selector)
     for doc in docs:
@@ -169,59 +133,91 @@ def select_by_keys(d='xmrc', c='job', selector=JOB_KEYS, limit_flag=True):
         doc.pop('_id', None)
         # if c == 'company' and doc.get('logo'):
         #     doc['logo'] = str(doc.get('logo'), encoding='utf-8')
-        sql = get_insert_keys(doc, table_name=c) + get_insert_values(doc)
+        # sql = get_insert_keys(doc, table_name=c) + get_insert_values(doc)
+        # print(sql)
+        sql = get_insert_sql(dict_impl=doc, table_name=c)
         # print(sql)
         try:
             cursor.execute(sql)
         except IntegrityError as e:
             print(e)
+            # print(sql)
+        except DataError as e:
+            print(e)
+            # print(sql)
+        except InternalError as e:
+            print(e)
+            # print(sql)
         # print(json.dumps(doc, indent=4, ensure_ascii=False).encode('utf-8').decode())
     cursor.close()
     conn.commit()
     conn.close()
 
 
-def get_insert_keys(dict_impl, table_name='job'):
-    sql = 'INSERT INTO {} ('.format(table_name)
+def get_insert_sql(dict_impl, table_name='job'):
+    keys = 'INSERT INTO {} ('.format(table_name)
+    values = 'VALUES ('
+    age_pattern = re.compile('\d+')
+    time_pattern = re.compile('\d+-\d+-\d+')
     for k in dict_impl:
-        sql += k + ','
-    # print(sql)
-    sql = sql[:-1]
-    sql += ') '
-    return sql
+        value = dict_impl.get(k)
+        if 'age' == k:
+            keys += 'age_lower,age_upper,'
+            if value:
+                ages = age_pattern.findall(value)
+                values += '{},{},'.format(ages[0], ages[1])
+            else:
+                values += 'NULL,NULL,'
+            continue
+        if 'time' == k:
+            keys += 'date_lower,date_upper,'
+            if value:
+                times = time_pattern.findall(value)
+                try:
+                    values += '"{}","{}",'.format(times[0], times[1])
+                except IndexError:
+                    print(value, times)
+                    values += 'NULL,NULL,'
+            else:
+                values += 'NULL,NULL,'
+            continue
 
+        keys += k + ','
+        if value:
+            if isinstance(value, str):
+                if '职位要求:' in value:
+                    lst = value.split(':')
+                    value = ':'.join(lst[1:])
 
-def get_insert_values(dict_impl):
-    sql = 'VALUES ('
-    for k in dict_impl:
-        if dict_impl.get(k):
-            # if isinstance(dict_impl.get(k), int):
-            #     sql += '{},'.format(dict_impl.get(k))
-            # else:
-            #     sql += '"{}",'.format(dict_impl.get(k))
-            sql += '"{}",'.format(str(dict_impl.get(k)))
+                    if value:
+                        value = value.strip()
+                        values += '"{}",'.format(value)
+                    else:
+                        values += 'NULL,'
+                    continue
+                if '：' in value:
+                    lst = value.split('：')
+                    value = '：'.join(lst[1:])
+                    value = value.strip()
+                    # value = value.strip('\r\n')
+                    if value:
+                        # if k == 'response_and_require' and len(value) <= 10:
+                        #     print(value)
+                        values += '"{}",'.format(value)
+                    else:
+                        values += 'NULL,'
+                else:
+                    values += '"{}",'.format(value)
+            else:
+                values += '"{}",'.format(value)
         else:
-            sql += '"",'
-
-    sql = sql[:-1]
-    sql += ');'
-    return sql
-
-
-@time_usage
-def remove_redundant(d='xmrc', c='job'):
-    collection = MongoClient()[d][c]
-    if c == 'job':
-        key = 'company_id'
-    else:
-        key = 'job'
-    docs = collection.find()
-    i = 0
-    for doc in docs:
-        if not doc.get(key):
-            collection.delete_one({'id': doc.get('id')})
-            i += 1
-    print(i)
+            values += 'NULL,'
+    # print(sql)
+    keys = keys[:-1]
+    keys += ') '
+    values = values[:-1]
+    values += ');'
+    return keys + values
 
 
 if __name__ == '__main__':
@@ -231,12 +227,9 @@ if __name__ == '__main__':
     # update_company()
     # update_job()
     # link_job_company()
-    # select_by_keys()
-    # select_by_keys(c='company', selector=COMPANY_KEYS)
-    # get_insert_keys(JOB_KEYS)
-    # print(get_insert_values(JOB_KEYS))
+    # select_by_keys(limit=0)
+    # select_by_keys(c='company', selector=COMPANY_KEYS, limit=0)
     # select_by_keys(c='job', selector=JOB_KEYS, limit_flag=False)
-    # select_by_keys(c='company', selector=COMPANY_KEYS, limit_flag=False)
     # select_by_keys(c='job', selector=JOB_KEYS)
     # select_by_keys(c='company', selector=COMPANY_KEYS)
     # remove_redundant()

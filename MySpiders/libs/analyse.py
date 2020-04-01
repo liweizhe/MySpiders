@@ -101,8 +101,8 @@ def analyse_set(db_name='xmrc', clt_name='job', key='welfare', split_char='、')
 
 
 if __name__ == '__main__':
-    analyse_salary()
-    # analyse_set()
+    # analyse_salary()
+    analyse_set()
     # analyse_set(key='nature')
     # analyse_set(key='experience')
     # analyse_set(key='education')

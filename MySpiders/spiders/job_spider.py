@@ -93,7 +93,7 @@ class JobSpider(scrapy.Spider):
         # //*[@id="container"]/table[2]/tr/td[3]/table[4]/tr[1]/td[2]/table[1]/tr[10]/td[2]
         src = response.xpath('//*[@id="container"]/table[2]/tr/td[3]/table[4]/tr[1]/td[2]/table[1]/tr[10]/td[2]/text()'
                              ).extract()
-        item['response_and_require'] = '职位职责和职位要求:\n'
+        item['response_and_require'] = '职位职责和职位要求：\n'
         for s in src:
             s = s.strip()
             if s:
